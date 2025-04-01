@@ -7,14 +7,10 @@ import os
 import sqlite3
 
 import google.generativeai as genai
-# print(genai.__version__)
 
 print(os.getenv("GOOGLE_AI_KEY"))
 
 genai.configure(api_key=os.getenv("GOOGLE_AI_KEY"))
-# models = genai.list_models()
-# for model in models:
-#     print(model.name)
 
 
 print("step2")
@@ -26,6 +22,7 @@ def get_gemini_response(question, prompt):
     return response.text.strip()
 
 
+# Optional Feature - Connecting to database
 def read_sql_query(sql, db):
     try:
         conn = sqlite3.connect(db)
@@ -36,14 +33,14 @@ def read_sql_query(sql, db):
         return rows
     except Exception as e:
         return str(e)
-# {database_schema}
+
+
 prompt = [
     f"""
     You are an expert SQL assistant. Convert English questions into SQL queries based on the given database schema.
 
     **Database Structure:**
     
-
     **Instructions:**
     - Generate a valid SQL query using the given database schema.
     - Ensure correct table and column references.
@@ -57,6 +54,7 @@ prompt = [
     """
 ]
 
+# // Static prompt with database structure defined
 prompt_static = [
     """
     You are an expert in converting English questions to optimized SQL queries.
@@ -96,44 +94,65 @@ prompt_static = [
 
 # Streamlit app
 st.set_page_config(page_title="SQL Query Generator", page_icon="🧠")
-background_image_url = "https://images.unsplash.com/photo-1521747116042-5a810fda9664"  # Replace with any soothing background image URL
+background_image_url = "https://images.unsplash.com/photo-1547149600-a6cdf8fce60c?fm=jpg&q=60&w=3000&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8NTh8fGNoYXQlMjBiYWNrZ3JvdW5kfGVufDB8fDB8fHww" 
 st.markdown(
-    """
+            # background: linear-gradient(135deg, #1a2a6c, #b21f1f, #fdbb2d);
+    f"""
     <style>
-        body {
-            background: linear-gradient(135deg, #1a2a6c, #b21f1f, #fdbb2d);
-            background-attachment: fixed;
+        .stApp {{
+            background: url('{background_image_url}') no-repeat center center fixed;
+            background-size: cover;
             color: white;
-        }
-        .stApp {
-            background-color: rgba(255, 255, 255, 0.2);
-            border-radius: 15px;
             padding: 20px;
-            box-shadow: 5px 5px 15px rgba(0,0,0,0.3);
-        }
-        h1 {
+        }}
+        h1 {{
             text-align: center;
             font-size: 36px;
             font-weight: bold;
-            color: white;
+            color: #FFD700; /* Gold color for contrast */
             margin-bottom: 10px;
-        }
-        .input-box {
+        }}
+        .input-box {{
             border-radius: 25px;
-            border: 1px solid white;
-            padding: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            padding: 12px;
             width: 100%;
             font-size: 16px;
-        }
-        .chat-button {
+            background-color: rgba(255, 255, 255, 0.1); /* Light transparent background */
+            color: white;
+            outline: none;
+        }}
+        .input-box::placeholder {{
+            color: rgba(255, 255, 255, 0.7); /* Light placeholder color */
+        }}
+        .chat-button {{
             background-color: #25D366;
             color: white;
             border-radius: 25px;
-            padding: 10px 20px;
+            padding: 12px 24px;
             font-size: 18px;
             font-weight: bold;
             border: none;
-        }
+            cursor: pointer;
+            transition: background-color 0.3s ease-in-out;
+        }}
+        .chat-button:hover {{
+            background-color: #1DA851;
+        }}
+        .stButton>button {{
+            background-color: #25D366;
+            color: white;
+            border-radius: 25px;
+            padding: 12px 24px;
+            font-size: 18px;
+            font-weight: bold;
+            border: none;
+            cursor: pointer;
+            transition: background-color 0.3s ease-in-out;
+        }}
+        .stButton>button:hover {{
+            background-color: #1DA851;
+        }}
     </style>
     """,
     unsafe_allow_html=True
@@ -147,14 +166,6 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-# st.markdown("<h3>📌 Define Your Database Structure</h3>", unsafe_allow_html=True)
-# database_schema = st.text_area(
-#     "Describe your database structure (tables, columns, data types)",
-#     placeholder="Example: 'My database has a table called employees with columns: ID (integer), Name (text), Salary (float), Department (text)'",
-#     help="Describe your table names and columns. Example: 'My database has a table orders with columns: OrderID, CustomerName, Amount, Date.'"
-# )
-
-# st.markdown("---")
 st.markdown("<h3>🔍 Enter Your Question</h3>", unsafe_allow_html=True)
 question = st.text_input(
     "Type your question in plain English:",
@@ -168,21 +179,9 @@ submit = st.button("⚡ Generate SQL Query", use_container_width=True)
 if submit and question:
     response = get_gemini_response(question, prompt)
     print(response)
-    data = read_sql_query(response, "database.db")
 
     st.markdown("<h3>📝 Generated SQL Query</h3>", unsafe_allow_html=True)
     st.code(response, language="sql")
-
-    if isinstance(data, str):  # If an error occurred
-        st.error(f"⚠️ SQL Execution Error: {data}")
-    elif data:
-        st.table(data)  # Display results in table format
-    else:
-        st.warning("⚠️ No data found for the given query.")
-
-    # st.subheader("The Response is:")
-    # st.header(response)
-    # st.header(data[0][0])
 
 st.markdown("---")
 st.markdown(
